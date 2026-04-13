@@ -61,38 +61,40 @@
   </form>
 </div>
 
-<!-- 🌍 Country-State-City Script -->
 <script>
 let countryData = [];
 
+// Load all countries + states
 async function loadCountries() {
-  const res = await fetch("https://countriesnow.space/api/v0.1/countries/states");
-  const data = await res.json();
+  try {
+    const res = await fetch("https://countriesnow.space/api/v0.1/countries/states");
+    const data = await res.json();
 
-  countryData = data.data;
+    countryData = data.data;
 
-  const countrySelect = document.getElementById("country");
+    const countrySelect = document.getElementById("country");
+    countrySelect.innerHTML = '<option value="">Select Country</option>';
 
-  countryData.forEach(c => {
-    const option = document.createElement("option");
-    option.value = c.name;
-    option.text = c.name;
+    countryData.forEach(c => {
+      const option = document.createElement("option");
+      option.value = c.name;
+      option.text = c.name;
+      countrySelect.appendChild(option);
+    });
 
-    if (c.name === "<%= employee.country %>") {
-      option.selected = true;
-    }
-
-    countrySelect.appendChild(option);
-  });
-
-  loadStates();
+  } catch (err) {
+    console.error("Error loading countries:", err);
+  }
 }
 
+// Load states based on country
 function loadStates() {
   const selectedCountry = document.getElementById("country").value;
   const stateSelect = document.getElementById("state");
+  const citySelect = document.getElementById("city");
 
-  stateSelect.innerHTML = "";
+  stateSelect.innerHTML = '<option value="">Select State</option>';
+  citySelect.innerHTML = '<option value="">Select City</option>';
 
   const country = countryData.find(c => c.name === selectedCountry);
 
@@ -102,53 +104,49 @@ function loadStates() {
     const option = document.createElement("option");
     option.value = s.name;
     option.text = s.name;
-
-    if (s.name === "<%= employee.state %>") {
-      option.selected = true;
-    }
-
     stateSelect.appendChild(option);
   });
-
-  loadCities();
 }
 
+// Load cities based on state
 async function loadCities() {
   const selectedCountry = document.getElementById("country").value;
   const selectedState = document.getElementById("state").value;
 
-  const res = await fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      country: selectedCountry,
-      state: selectedState
-    })
-  });
-
-  const data = await res.json();
-
   const citySelect = document.getElementById("city");
-  citySelect.innerHTML = "";
+  citySelect.innerHTML = '<option value="">Select City</option>';
 
-  data.data.forEach(city => {
-    const option = document.createElement("option");
-    option.value = city;
-    option.text = city;
+  try {
+    const res = await fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        country: selectedCountry,
+        state: selectedState
+      })
+    });
 
-    if (city === "<%= employee.city %>") {
-      option.selected = true;
-    }
+    const data = await res.json();
 
-    citySelect.appendChild(option);
-  });
+    data.data.forEach(city => {
+      const option = document.createElement("option");
+      option.value = city;
+      option.text = city;
+      citySelect.appendChild(option);
+    });
+
+  } catch (err) {
+    console.error("Error loading cities:", err);
+  }
 }
 
+// Event listeners
 document.getElementById("country").addEventListener("change", loadStates);
 document.getElementById("state").addEventListener("change", loadCities);
 
+// Initialize
 loadCountries();
 </script>
 
