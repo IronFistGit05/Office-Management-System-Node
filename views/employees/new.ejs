@@ -61,9 +61,95 @@
   </form>
 </div>
 
-<!-- Country Script (same as before) -->
+<!-- 🌍 Country-State-City Script -->
 <script>
-/* keep your existing country-state-city script here */
+let countryData = [];
+
+async function loadCountries() {
+  const res = await fetch("https://countriesnow.space/api/v0.1/countries/states");
+  const data = await res.json();
+
+  countryData = data.data;
+
+  const countrySelect = document.getElementById("country");
+
+  countryData.forEach(c => {
+    const option = document.createElement("option");
+    option.value = c.name;
+    option.text = c.name;
+
+    if (c.name === "<%= employee.country %>") {
+      option.selected = true;
+    }
+
+    countrySelect.appendChild(option);
+  });
+
+  loadStates();
+}
+
+function loadStates() {
+  const selectedCountry = document.getElementById("country").value;
+  const stateSelect = document.getElementById("state");
+
+  stateSelect.innerHTML = "";
+
+  const country = countryData.find(c => c.name === selectedCountry);
+
+  if (!country) return;
+
+  country.states.forEach(s => {
+    const option = document.createElement("option");
+    option.value = s.name;
+    option.text = s.name;
+
+    if (s.name === "<%= employee.state %>") {
+      option.selected = true;
+    }
+
+    stateSelect.appendChild(option);
+  });
+
+  loadCities();
+}
+
+async function loadCities() {
+  const selectedCountry = document.getElementById("country").value;
+  const selectedState = document.getElementById("state").value;
+
+  const res = await fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      country: selectedCountry,
+      state: selectedState
+    })
+  });
+
+  const data = await res.json();
+
+  const citySelect = document.getElementById("city");
+  citySelect.innerHTML = "";
+
+  data.data.forEach(city => {
+    const option = document.createElement("option");
+    option.value = city;
+    option.text = city;
+
+    if (city === "<%= employee.city %>") {
+      option.selected = true;
+    }
+
+    citySelect.appendChild(option);
+  });
+}
+
+document.getElementById("country").addEventListener("change", loadStates);
+document.getElementById("state").addEventListener("change", loadCities);
+
+loadCountries();
 </script>
 
 </body>
